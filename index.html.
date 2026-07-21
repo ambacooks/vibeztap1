@@ -1,1 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Vibeztap Smart Redirect</title>
+  <script>
+    // 1. PASTE YOUR PUBLISHED GOOGLE SHEET CSV LINK INSIDE THE QUOTES BELOW
+    const SHEET_CSV_URL = "YOUR_PUBLISHED_CSV_LINK_HERE";
+
+    // 2. FALLBACK LINK (If card ID isn't found or URL is empty)
+    const DEFAULT_LINK = "https://instagram.com";
+
+    async function redirectUser() {
+      // Reads Card ID from browser URL (e.g., ?id=VT-1001)
+      const urlParams = new URLSearchParams(window.location.search);
+      const cardId = urlParams.get('id');
+
+      if (!cardId) {
+        window.location.replace(DEFAULT_LINK);
+        return;
+      }
+
+      try {
+        const response = await fetch(SHEET_CSV_URL);
+        const data = await response.text();
+        const rows = data.split('\n').map(row => row.split(','));
+
+        let targetUrl = DEFAULT_LINK;
+        // Search Google Sheet from newest entry to oldest entry
+        for (let i = rows.length - 1; i >= 1; i--) {
+          const rowCardId = rows[i][1] ? rows[i][1].replace(/"/g, '').trim() : '';
+          const rowUrl = rows[i][2] ? rows[i][2].replace(/"/g, '').trim() : '';
+
+          if (rowCardId.toLowerCase() === cardId.toLowerCase() && rowUrl.startsWith('http')) {
+            targetUrl = rowUrl;
+            break;
+          }
+        }
+        window.location.replace(targetUrl);
+      } catch (error) {
+        window.location.replace(DEFAULT_LINK);
+      }
+    }
+
+    redirectUser();
+  </script>
+</head>
+<body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+  <p>Connecting to Vibeztap Profile...</p>
+</body>
+</html>
 
